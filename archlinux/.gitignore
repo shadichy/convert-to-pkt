@@ -1,0 +1,9 @@
+/
+/pkg
+/src
+*.pkt.*
+pkgsrc
+node_modules
+*-lock.yaml
+input_packages/*
+!input_packages/.keep
