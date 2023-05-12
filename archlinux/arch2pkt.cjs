@@ -56,21 +56,32 @@ db.forEach((packit) => {
 
 delete arch_info.alterarch;
 
-var max_level = [0, 0];
+var max_level = [0, 0, 0];
 
-function leveling(packit) {
-	if (typeof packit.level == "number") return;
+function leveling(packit, callstack = 0) {
+	if (callstack > 8) return 1;
+	if (typeof packit.level == "number") return 0;
 	let max = 0;
 	for (const p of packit.deps) {
 		const i = pkg.indexOf(p);
-		if (typeof db[i].level != "number") leveling(db[i]);
+		if (typeof db[i].level != "number" && leveling(db[i], callstack + 1) == 1) {
+			db.splice(i, 1);
+			db.push(packit);
+			return 1;
+		}
 		if (db[i].level + 1 > max) max = db[i].level + 1;
 	}
 	packit.level = max;
-	if (packit.deps.length > max_level[0] && packit.level > max_level[1]) max_level = [packit.deps.length, packit.level];
+	if (packit.deps.length + 3 * packit.level >= max_level[2] + 3 * max_level[1]) max_level = [db.indexOf(packit), packit.level, packit.deps.length];
+	return 0;
 }
 
-db.forEach((packit) => leveling(packit));
+let pk = 0;
+while (true) {
+	if (pk == db.length) break;
+	if (leveling(db[pk]) == 1) pk--;
+	pk++;
+}
 
 const dist_info = {
 	id: pkg[max_level[0]],
@@ -78,7 +89,7 @@ const dist_info = {
 	arch: arch_info.arch,
 	version: db[max_level[0]].ver,
 	packit_ver: "^" + exSync(`packit --version`),
-	dependencies: [] //external_deps.map((deps) => ({ id: deps, version: "" })),
+	dependencies: [], //external_deps.map((deps) => ({ id: deps, version: "" })),
 };
 writeFileSync("./pkgsrc/.packit", JSON.stringify(dist_info));
 writeFileSync(
@@ -91,6 +102,8 @@ writeFileSync(
 		builddate: db[max_level[0]].builddate,
 	})
 );
+
+console.info("Writing out", `${dist_info.id}-${dist_info.version}.pkt.sfs`);
 exSync(`mksquashfs pkgsrc/ ${dist_info.id}-${dist_info.version}.pkt.sfs -comp zstd -Xcompression-level 22 -b 1M -no-duplicates -no-recovery -always-use-fragments`);
 
 exec(`rm -rf pkgsrc/`, (e, o, i) => undefined);
