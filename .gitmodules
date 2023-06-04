@@ -1,0 +1,3 @@
+[submodule "archlinux/minifier"]
+	path = archlinux/minifier
+	url = https://github.com/shadichy/bash-minifier

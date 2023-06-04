@@ -2,8 +2,10 @@
 /pkg
 /src
 *.pkt.*
+*.pkg.tar*
 pkgsrc
 node_modules
 *-lock.yaml
 input_packages/*
 !input_packages/.keep
+dist

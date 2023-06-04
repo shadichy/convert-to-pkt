@@ -1,0 +1,12 @@
+pkgname=c2pkt-archlinux
+pkgver=0.0.1
+pkgrel=1
+pkgdesc="Converts ArchLinux packages to PKT format."
+arch=("any")
+license=('GPL')
+depends=()
+
+package() {
+	cd ..
+	make DESTDIR=$pkgdir
+}
